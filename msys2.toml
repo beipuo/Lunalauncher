@@ -1,0 +1,115 @@
+[msys2]
+# 使用的 MSYSTEM
+msystem = "UCRT64"
+
+# MSYS2 版本 (YYYY-MM-DD 格式)
+version = "2025-12-13"
+
+# MSYS2 基础目录 URL（不包含具体文件名）
+base_url = "https://repo.msys2.org/distrib/x86_64/"
+
+# pacman 镜像（可换成公司/国内镜像）
+mirror = ""
+
+auto_update = true
+
+[packages]
+# toolchain
+mingw-w64-ucrt-x86_64-toolchain = "*"
+mingw-w64-ucrt-x86_64-cmake = "*"
+mingw-w64-ucrt-x86_64-ninja = "*"
+mingw-w64-ucrt-x86_64-ccache = "*"
+mingw-w64-ucrt-x86_64-extra-cmake-modules = "*"
+
+# qt6
+mingw-w64-ucrt-x86_64-qt6-base = "6.6.*"
+mingw-w64-ucrt-x86_64-qt6-5compat = "*"
+mingw-w64-ucrt-x86_64-qt6-svg = "*"
+mingw-w64-ucrt-x86_64-qt6-imageformats = "*"
+mingw-w64-ucrt-x86_64-qt6-tools = "*"
+mingw-w64-ucrt-x86_64-qt6-translations = "*"
+mingw-w64-ucrt-x86_64-qt6-declarative = "*"
+mingw-w64-ucrt-x86_64-qt6-networkauth = "*"
+mingw-w64-ucrt-x86_64-qt6-websockets = "6.10.1-1"
+mingw-w64-ucrt-x86_64-qt6-multimedia = "*"
+
+# app deps
+mingw-w64-ucrt-x86_64-quazip-qt6 = "*"
+mingw-w64-ucrt-x86_64-libarchive = "*"
+mingw-w64-ucrt-x86_64-zlib = "*"
+mingw-w64-ucrt-x86_64-qtkeychain-qt6 = "*"
+mingw-w64-ucrt-x86_64-cmark = "*"
+mingw-w64-ucrt-x86_64-qrencode = "*"
+mingw-w64-ucrt-x86_64-tomlplusplus = "*"
+
+# other
+mingw-w64-ucrt-x86_64-openssl = "*"
+mingw-w64-ucrt-x86_64-curl = "*"
+mingw-w64-ucrt-x86_64-qt6-speech = "*"
+
+#clangd
+mingw-w64-ucrt-x86_64-clang-tools-extra = "*"
+
+[tasks]
+# 常用构建脚本
+configure = "cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install-release -DENABLE_LTO=ON -DLauncher_BUNDLE_INCLUDE_SYSTEM_LIBRARY_PATH=OFF"
+configure_debug = "cmake -S . -B build-debug -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=install-debug -DENABLE_LTO=OFF -DLauncher_BUNDLE_INCLUDE_SYSTEM_LIBRARY_PATH=OFF"
+configure_debug_ignore = "cmake -S . -B build-debug -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=install-debug -DENABLE_LTO=OFF -DLauncher_BUNDLE_INCLUDE_SYSTEM_LIBRARY_PATH=OFF -DCMAKE_CXX_FLAGS_DEBUG=-s -DCMAKE_C_FLAGS_DEBUG=-s"
+
+build = "cmake --build build-release --parallel"
+build_debug = "cmake --build build-debug --parallel"
+
+install = "cmake --install build-release"
+install_debug = "cmake --install build-debug"
+
+portable = "cmake --install build-release --component portable"
+portable_debug = "cmake --install build-debug --component portable"
+
+clean = "rm -rf build-release build-debug"
+clean_all = "rm -rf build-release build-debug install-release install-debug"
+test = "./build-debug/launcher/lunalauncher.exe"
+test_install = "./install-debug/lunalauncher.exe"
+
+
+rebuild_debug = "cmake --build build-debug --target clean && cmake --build build-debug --parallel"
+rebuild = "cmake --build build-release --target clean && cmake --build build-release --parallel"
+
+# 一键 build + install + test
+[tasks.cib]
+command = "cmake --build build-release --parallel"
+depends_on = []
+description = "Build release"
+
+[tasks.cii]
+command = "cmake --install build-release"
+depends_on = ["cib"]
+description = "Install release"
+
+[tasks.cit]
+command = "./install-release/lunalauncher.exe"
+depends_on = ["cii"]
+description = "Test installed launcher"
+
+[tasks.ci]
+depends_on = ["cit"]
+description = "Full CI: build + install + test"
+
+# Debug 版本的 CI
+[tasks.cibd]
+command = "cmake --build build-debug --parallel"
+depends_on = []
+description = "Build debug"
+
+[tasks.ciid]
+command = "cmake --install build-debug"
+depends_on = ["cibd"]
+description = "Install debug"
+
+[tasks.citd]
+command = "./install-debug/lunalauncher.exe"
+depends_on = ["ciid"]
+description = "Test installed debug launcher"
+
+[tasks.cid]
+depends_on = ["citd"]
+description = "Full CI (debug): build + install + test"
